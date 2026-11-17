@@ -4,6 +4,10 @@
 
 - A public endpoint
 - Guarded only by the silent rejection of suspicious looking payloads
+- Payload validation alone will not protect against abuse such as large
+  volumes of otherwise valid requests. Rate limiting, request size limits
+  and cloud-level quotas may need consideration before deployment; they
+  are not decided or implemented yet.
 
 ## UI serving
 

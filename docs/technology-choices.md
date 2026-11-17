@@ -7,13 +7,18 @@ space.
 - Use Google's Cloud Function Framework package
 - Assume a unix-like dev and runtime environment
 
+# Repository layout
+
+- One repository with two top-level directories:
+	- `ingestion/` — the Go backend
+	- `ui/` — a separate Svelte application, organised comparably with
+	  dxact-draw
+
 # To serve the UI
 
-- I am not sure about this
-- I would prefer to use Svelte to compose the UI, but I'm not sure how to
-  organise the code for this and have it integrated into the cloud function
-  server.
-	- Maybe you can define a directory in the repo that IS the Svelte app
-	- Design it as a SPA
-	- And have the cloud function serve the SPA as the response to the GET
-	  handler?
+- Use Svelte to compose the UI as a SPA under `ui/`.
+- The intended arrangement is that the Cloud Function serves the built static
+  assets (HTML, JavaScript, CSS) as the response to GET, potentially embedding
+  them with Go's `embed.FS`.
+- This is feasible pending validation — see high-level-architecture.md
+  (single endpoint; Phase 2 proof of concept locally then on Google Cloud).

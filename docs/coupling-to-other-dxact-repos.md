@@ -9,6 +9,8 @@
 
 - The telemetry events that this service will consume are emitted by code in the
   dxact-draw repository, and it is that repo that owns the event schema.
+- This repo documents what it expects and consumes that contract; it does not
+  own the emit schema.
 - The code in this repo is obliged to keep track of that schema as a slave.
 - Probably reducing the mechanicl contract to a simple, and apprporiate  
   string based parity

@@ -16,3 +16,10 @@
 - The data model need not be the same shape as the raw data
 - The data model may well benefit from being composed of maps and indexes for
   example that make the queries easier to evaluate
+
+## Loading into the UI
+
+- The observability UI should build the in-memory data model when it starts and
+  keep that instance unchanged for the session.
+- Reloading the page retrieves the latest telemetry and rebuilds the model.
+- How the UI retrieves stored events and constructs the model remains open.

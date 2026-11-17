@@ -1,15 +1,110 @@
 # Developer workflow
 
-- I think this project has the potential to be produced using a phased scoping,
-  design, planning and code generation plan.
-- It is  of a size that will demand multi AI code and document generation
-  sessions.
+- This project is produced with phased scoping, design, planning and
+  implementation across multiple sessions.
 - The convergence of design and planning docs will require manual iteration.
-- But the first full implementation may well be possible using a carefully
-  described phased and scripted approach.
-  	- I.e. prior work establishes work phases
-	- Each sized to be sensible in one session
-	- The first phase is to write an automation script that governs AI
-	  over multiple sessions to implement the whole things.
-	- I suspect that giving maybe 2 hours to run would do it.
 
+## Automation considered
+
+- We considered driving the first full implementation with a carefully described
+  phased automation script that would govern AI work over multiple sessions
+  (phases sized for one session each; a scripted run on the order of a couple
+  of hours).
+- We are not using that approach for now. Work proceeds manually in incremental
+  phases with tests and reviews between them.
+
+## Already decided
+
+- Design events before building the service
+- Prove one Go endpoint can take POSTs and serve a Svelte UI
+- Keep business logic off HTTP and cloud storage details
+- Analyse via an in-memory model, not by querying raw storage directly
+- `dxact-draw` owns what gets emitted
+- Work manually in phases, not via a big automation script
+
+## Still open
+
+- Hourly JSONL append versus one object per event (see high-level-architecture.md)
+- Exactly how the UI loads stored events into the in-memory model
+- Which abuse protections to turn on before public use (see access-control.md)
+
+## Phases
+
+### 1. Event design
+
+Agree the product questions we care about, then the event names and fields that
+would answer them. Keep names plain. Prefer a few generic events with
+parameters (for example "command executed" plus the command name) over dozens
+of one-off types. Agree the common envelope: type, UTC time, browser UUID,
+schema version, and extra JSON fields. When DrawExact emits, that contract
+lives in `dxact-draw`.
+
+**Done when:** there is a written list of questions, events, and fields we are
+willing to implement.
+
+### 2. Architecture proof of concept
+
+Build the smallest real slice: a Go handler that accepts a POST and can serve a
+Svelte "Hello World" on GET. Run it on a developer machine, then on Google
+Cloud. This proves the shape (one service, both jobs), not analytics.
+
+**Done when:** POST and GET work locally and on GCP with the trivial UI.
+
+### 3. Ingestion against fake storage
+
+Add real validation of the event envelope (including schema version). Save
+through a storage interface into an in-memory fake so tests do not need Google
+Cloud. The HTTP layer stays thin; the save logic does not know about GCS yet.
+UUIDs are not created here — only checked on the payload.
+
+**Done when:** valid events are accepted and stored in the fake; bad ones are
+rejected; tests cover that without cloud.
+
+### 4. Cloud storage
+
+Investigate and choose: append lines into a time-window object (with the
+concurrent-overwrite risk), or one object per event under a time-based prefix.
+Implement the GCS backend behind the same interface. Object names stay
+time-based; do not put event type or user id in the path.
+
+**Done when:** the choice is written down, GCS save works, and tests (plus a
+small real check) show events survive.
+
+### 5. DrawExact sends events
+
+In the browser: create a UUID on first visit, keep it in localStorage, send it
+on every event. Point `dxact-draw` / `dxact-wasm` at the new service using the
+Phase 1 schema.
+
+**Done when:** a normal use of DrawExact produces events visible in storage.
+
+### 6. In-memory analysis model
+
+Load stored events into a model built for questions, not for cheap storage —
+indexes, maps, or similar as needed. Support older schema versions on the way
+in; ignore obsolete fields; do not rewrite old objects. Test queries with
+fixture events so this phase does not depend on live traffic. May overlap with
+Phase 5 once Phases 3–4 are solid.
+
+**Done when:** at least a couple of real questions are answered correctly in
+tests from known inputs.
+
+### 7. First observability UI
+
+Replace Hello World with screens for those first hard-coded recipes. Load the
+model when the page opens; refresh means reload. Charts and richer filters wait
+until we know which views we actually use.
+
+**Done when:** we can open the UI and read answers to the first questions from
+real or fixture-backed data.
+
+### 8. Production hardening
+
+Not "start testing" — earlier phases should already leave the code trustworthy.
+Add whatever is still needed before a public ingest URL: rate limits, request
+size limits, cloud quotas, a proper production deploy, and a thin end-to-end
+check. Phase 2 already puts a minimal version on Google Cloud; this phase is
+the real service.
+
+**Done when:** we are willing to point real DrawExact traffic at it and use the
+UI as the daily read.

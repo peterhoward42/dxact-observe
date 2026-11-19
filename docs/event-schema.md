@@ -24,8 +24,9 @@
 - Illustrative types only (not an agreed catalogue): application opened;
   command executed (which command); help opened (which resource); video viewed
   (which video; short or long).
-- The concrete catalogue is undecided. Phase 1 is to agree the questions, names
-  and parameters. The emitting contract is owned by dxact-draw (see
+- The product questions are in [product-questions.md](./product-questions.md).
+  Event names and parameters are still undecided. Phase 1 is to derive those
+  from the questions. The emitting contract is owned by dxact-draw (see
   coupling-to-other-dxact-repos.md).
 
 ## Common event envelope

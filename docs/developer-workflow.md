@@ -33,14 +33,16 @@
 ### 1. Event design
 
 Agree the product questions we care about, then the event names and fields that
-would answer them. Keep names plain. Prefer a few generic events with
-parameters (for example "command executed" plus the command name) over dozens
-of one-off types. Agree the common envelope: type, UTC time, browser UUID,
-schema version, and extra JSON fields. When DrawExact emits, that contract
-lives in `dxact-draw`.
+would answer them. The questions are in
+[product-questions.md](./product-questions.md). Keep names plain. Prefer a few
+generic events with parameters (for example "command executed" plus the command
+name) over dozens of one-off types. Agree the common envelope: type, UTC time,
+browser UUID, schema version, and extra JSON fields. When DrawExact emits, that
+contract lives in `dxact-draw`.
 
 **Done when:** there is a written list of questions, events, and fields we are
-willing to implement.
+willing to implement. The questions half is `product-questions.md`; events and
+fields remain.
 
 ### 2. Architecture proof of concept
 

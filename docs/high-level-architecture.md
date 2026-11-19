@@ -43,7 +43,7 @@ For each POST, the handler:
 ## Consuming telemetry events
 
 - Incoming events should be stored in GCS
-- Use a single bucket
+- Use a single bucket named `events`
 - Use a new blob to model and accomodate events that carry events with a
   particular time window (UTC)
 - Incoming events should be serialised to single line JSON and appended as one

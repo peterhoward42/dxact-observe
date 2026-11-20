@@ -25,9 +25,10 @@
   command executed (which command); help opened (which resource); video viewed
   (which video; short or long).
 - The product questions are in [product-questions.md](./product-questions.md).
-  Event names and parameters are still undecided. Phase 1 is to derive those
-  from the questions. The emitting contract is owned by dxact-draw (see
-  coupling-to-other-dxact-repos.md).
+  The draft event names and parameters are in
+  [event-catalogue.md](./event-catalogue.md). They are not final until we say
+  we are willing to implement that list. The emitting contract is owned by
+  dxact-draw (see coupling-to-other-dxact-repos.md).
 
 ## Common event envelope
 

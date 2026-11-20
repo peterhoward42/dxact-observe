@@ -41,8 +41,9 @@ browser UUID, schema version, and extra JSON fields. When DrawExact emits, that
 contract lives in `dxact-draw`.
 
 **Done when:** there is a written list of questions, events, and fields we are
-willing to implement. The questions half is `product-questions.md`; events and
-fields remain.
+willing to implement. The questions are `product-questions.md`; the draft
+events and fields are `event-catalogue.md` (not final until we agree to
+implement that list).
 
 ### 2. Architecture proof of concept
 

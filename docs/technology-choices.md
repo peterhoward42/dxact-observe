@@ -21,4 +21,5 @@ space.
   assets (HTML, JavaScript, CSS) as the response to GET, potentially embedding
   them with Go's `embed.FS`.
 - This is feasible pending validation — see high-level-architecture.md
-  (single endpoint; Phase 2 proof of concept locally then on Google Cloud).
+  (single endpoint; Phase 2 proof of concept locally; first Cloud deploy in
+  Phase 3 with GCS).

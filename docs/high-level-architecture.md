@@ -15,8 +15,9 @@
 - We are therefore fairly confident this arrangement will work. Deployment
   integration, static asset routing and performance still need verifying.
 - Phase 2 should include a small proof of concept that validates the complete
-  arrangement, initially locally and then on Google Cloud, before committing
-  to the architecture.
+  arrangement locally (POST plus serving the UI from one process) before
+  committing to the architecture. The first Google Cloud deploy waits until
+  Phase 3 with GCS.
 
 ## HTTP handling and application logic
 

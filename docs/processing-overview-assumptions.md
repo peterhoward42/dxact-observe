@@ -1,15 +1,22 @@
 # Processing overview assumptions
 
 - Ingestion is concerned only with:
-	- decoding and validating events 
-	- choosing and creating a new time envelope blob when necessary
-	- serialising them in a human readable and compact way
-		- probably single line JSON
+	- decoding and validating events
+	- serialising each event as compact single-line JSON
+	- writing one new GCS object per event under
+	  `events/YYYY-MM-DD/<event-uuid>.json` (minting a fresh event UUID for
+	  the object name; see high-level-architecture.md)
 
 - Queries should not run over raw events
 - Instead the repo should define an explicit data model
 - Each query should fetch the raw events from storage, so as to build an in
   memory instance of this data model
+- The Cloud Function (or equivalent loader) lists and reads stored events,
+  parses them into that model, groups them by user UUID, and orders them by
+  event timestamp for analysis and UI display
+- Ordering uses the UTC event time in the payload, not object upload or
+  creation time. Network delays and retries can mean events arrive out of
+  storage order
 - The queries should be defined to run over the data model
 - Thus the query logic can have tests written for them without any coupling to
   raw events or the blob storage

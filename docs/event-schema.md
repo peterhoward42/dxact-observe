@@ -35,12 +35,23 @@
 Every event carries:
 
 - Event type — what happened
-- Timestamp — when it happened, in UTC
-- User identifier — browser-installation UUID (see below)
+- Timestamp — when it happened, in UTC. This payload timestamp is
+  authoritative for reconstructing activity. It is not the GCS object's
+  upload or creation time; network delays and retries can make those differ.
+- User identifier — persistent pseudonymous browser-installation UUID (see
+  below)
 - Schema version — so historical records can be recognised (see below)
 - Additional parameters — information particular to that event, as arbitrary
   JSON, so individual events can gain fields without continually restructuring
   the whole schema
+
+The fresh UUID used in the GCS object name (`events/YYYY-MM-DD/<event-uuid>.json`)
+is a storage/naming concern on the ingest side. It is not the user identifier
+in this envelope, and the emit contract does not need to supply it unless we
+later decide the browser should mint it.
+
+If unambiguous ordering of events with identical timestamps becomes necessary,
+a per-user sequence number can be added later.
 
 ## Schema versioning
 
@@ -62,18 +73,18 @@ Every event carries:
 
 - We didn't need to identify users with the Vercel telemetry because it did that
   for us.
-- We will now do that ourselves. 
-- Each event will carry a proxy user id minted by the sender
-	- A unique string that anonamises the user but serves as a unique key for
-	  that user.
-	- Use a UUID or something similar that is shorter but sufficient
-	- We don't need this ID to also encapsulate a timestamp but don't care 
+- We will now do that ourselves.
+- Each event will carry a persistent pseudonymous user id minted by the sender.
+  This is not a verified personal identity.
+	- A unique string that anonymises the user but serves as a unique key for
+	  that browser/device environment.
+	- Use a UUID (or something similar that is shorter but sufficient).
+	- We don't need this ID to also encapsulate a timestamp but don't care
 	  if it does.
-	- We won't attempt to identify real unique users. As our proxy we will mint a
-	  new ID when we first encounter drawexact running on any given
-	  device/browser combination.
-	- We persist that value for subsequent use in that Browser's persistent 
-	  storage (localStorage).
+	- We won't attempt to identify real unique users. DrawExact mints a new ID
+	  on first use in a given browser/device environment and reuses it on
+	  subsequent visits, subject to the persistence of local browser storage
+	  (localStorage).
 - The UUID identifies a browser installation, not a person across devices. That
   is an accepted compromise; recognising the same person across devices would
   need more infrastructure and potentially account identity.

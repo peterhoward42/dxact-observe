@@ -1,3 +1,8 @@
+> Temporary note from Pete. The decisions here have been folded into the main
+> planning docs (`high-level-architecture.md`, `developer-workflow.md`,
+> `processing-overview-assumptions.md`, and `event-schema.md`). Prefer those
+> documents going forward; keep this file only as the historical source.
+
 # DrawExact Event Observability: Design Brief
 
 ## Purpose

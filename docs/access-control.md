@@ -8,6 +8,9 @@
   volumes of otherwise valid requests. Rate limiting, request size limits
   and cloud-level quotas may need consideration before deployment; they
   are not decided or implemented yet.
+- If public GET access requires an unauthenticated function, POST ingestion
+  still needs its own authentication or request verification as appropriate.
+  HTTP method separation alone is not a security boundary.
 
 ## UI serving
 

@@ -1,3 +1,9 @@
+> Temporary note from Pete. The decisions here have been folded into the main
+> planning docs (`technology-choices.md`, `high-level-architecture.md`,
+> `developer-tooling.md`, `developer-workflow.md`, `google-cloud-platform.md`,
+> and `access-control.md`). Prefer those documents going forward; keep this
+> file only as the historical source.
+
 # Go Cloud Function with an Embedded Svelte UI
 
 ## Purpose

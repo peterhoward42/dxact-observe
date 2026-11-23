@@ -16,15 +16,28 @@
 ## Already decided
 
 - Design events before building the service
-- Prove one Go endpoint can take POSTs and serve a Svelte UI
+- One monorepo; one Go HTTP Cloud Function; embedded production Svelte SPA;
+  Make-driven source deployment (see technology-choices.md,
+  high-level-architecture.md, developer-tooling.md)
+- Same-origin UI and backend; revisit separate frontend hosting only if
+  traffic, caching, or operational requirements justify it
+- Implement that shape locally in Phase 2 (POST plus serving the UI from one
+  process); first Cloud deploy in Phase 3 with GCS
 - Keep business logic off HTTP and cloud storage details
-- Analyse via an in-memory model, not by querying raw storage directly
+- Analyse via an in-memory model, not by querying raw storage directly:
+  list and read stored events, parse them, group by user UUID, and order by
+  event timestamp for analysis and UI display
+- One GCS object per event; compact single-line JSON; object names
+  `events/YYYY-MM-DD/<event-uuid>.json` (see high-level-architecture.md)
+- UTC event time in the payload is authoritative for reconstructing activity,
+  not object upload or creation time
+- Optimize for understanding DrawExact's first users, not hypothetical scale;
+  keep the system easy to implement, inspect, and replace
 - `dxact-draw` owns what gets emitted
 - Work manually in phases, not via a big automation script
 
 ## Still open
 
-- Hourly JSONL append versus one object per event (see high-level-architecture.md)
 - Exactly how the UI loads stored events into the in-memory model
 - Which abuse protections to turn on before public use (see access-control.md)
 
@@ -47,13 +60,15 @@ implement that list).
 
 ### 2. Local ingest slice
 
-Build the first real code entirely on a developer machine: a Go handler that
-accepts a POST and serves a Svelte "Hello World" on GET, real validation of the
-event envelope (including schema version), and saves through a storage interface
-into an in-memory fake. The HTTP layer stays thin; the save logic does not know
-about GCS. UUIDs are not created here — only checked on the payload. No Google
-Cloud in this phase — that waits until Phase 3. This proves the shape (one
-service, both jobs) and that ingestion works under test, not analytics.
+Build the first real code entirely on a developer machine against the decided
+shape: a Go handler that accepts a POST and serves a Svelte "Hello World" on
+GET (including static asset paths as needed), real validation of the event
+envelope (including schema version), and saves through a storage interface into
+an in-memory fake. The HTTP layer stays thin; the save logic does not know
+about GCS. User UUIDs are not created here — only checked on the payload. No
+Google Cloud in this phase — that waits until Phase 3. This proves the
+arrangement runs under test (one service, both jobs), not analytics and not a
+choice of architecture.
 
 **Done when:** POST and GET work locally with the trivial UI; valid events are
 accepted and stored in the fake; bad ones are rejected; tests cover that without
@@ -62,14 +77,15 @@ cloud.
 ### 3. Cloud storage
 
 First contact with Google Cloud: stand up the project enough to deploy the
-Cloud Function and use GCS. Investigate and choose: append lines into a
-time-window object (with the concurrent-overwrite risk), or one object per event
-under a time-based prefix. Implement the GCS backend behind the same interface
-used by the Phase 2 fake. Object names stay time-based; do not put event type or
-user id in the path.
+Cloud Function from source (including staged `static/` assets — see
+developer-tooling.md and google-cloud-platform.md) and use GCS. Implement the
+GCS backend behind the same interface used by the Phase 2 fake. Write one
+object per event under `events/YYYY-MM-DD/<event-uuid>.json` (UTC date from the
+payload timestamp; fresh event UUID for the object name, not the user UUID).
+Do not put event type or user id in the path.
 
-**Done when:** the choice is written down, the function deploys, GCS save works,
-and tests (plus a small real check) show events survive.
+**Done when:** the function deploys, GCS save works, and tests (plus a small
+real check) show events survive.
 
 ### 4. DrawExact sends events
 
@@ -82,10 +98,10 @@ Phase 1 schema.
 ### 5. In-memory analysis model
 
 Load stored events into a model built for questions, not for cheap storage —
-indexes, maps, or similar as needed. Support older schema versions on the way
-in; ignore obsolete fields; do not rewrite old objects. Test queries with
-fixture events so this phase does not depend on live traffic. May overlap with
-Phase 4 once Phases 2–3 are solid.
+indexes, maps, or similar as needed. Group by user UUID and order by event
+timestamp. Support older schema versions on the way in; ignore obsolete fields;
+do not rewrite old objects. Test queries with fixture events so this phase does
+not depend on live traffic. May overlap with Phase 4 once Phases 2–3 are solid.
 
 **Done when:** at least a couple of real questions are answered correctly in
 tests from known inputs.

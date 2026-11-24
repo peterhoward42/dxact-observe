@@ -26,9 +26,9 @@ one table with the same three columns. An event’s **full parameter list for
 its tier lives in the section where it first appears**; later sections say
 “as in …” and add only questions.
 
-The common envelope (type, UTC time, browser UUID, schema version) is defined
-in [event-schema.md](./event-schema.md). Every row below assumes that envelope.
-The **Parameters** column is only the extras for that event.
+The common envelope (`time`, `type`, `browser_uuid`, `schema_version`, `params`)
+is defined in [event-schema.md](./event-schema.md). Every row below assumes that
+envelope; the **Parameters** column is the contents of `params`.
 
 ## Working notes
 

@@ -32,23 +32,30 @@
 
 ## Common event envelope
 
-Every event carries:
+One JSON object per POST body (`Content-Type: application/json`). After
+validation, storage writes a compact single-line re-encoding of the **accepted
+envelope** (including `params`), not the raw POST body. Key order does not
+matter on ingest; when writing the stored object, put `time` first so a
+single-line object is easy to skim.
 
-- Event type — what happened
-- Timestamp — when it happened, in UTC. This payload timestamp is
-  authoritative for reconstructing activity. It is not the GCS object's
-  upload or creation time; network delays and retries can make those differ.
-- User identifier — persistent pseudonymous browser-installation UUID (see
-  below)
-- Schema version — so historical records can be recognised (see below)
-- Additional parameters — information particular to that event, as arbitrary
-  JSON, so individual events can gain fields without continually restructuring
-  the whole schema
+```json
+{"time":"2026-11-24T08:45:12.345Z","type":"Application opened","browser_uuid":"8e6a4c1d-5f29-4e83-9e10-42bd735af0c2","schema_version":1,"params":{"face":"desktop","arrival":"plain"}}
+```
+
+| Field | Meaning and rules |
+| --- | --- |
+| `time` | When it happened, UTC. RFC 3339 with a `Z` suffix; fractional seconds allowed. Reject missing `Z` or non-UTC offsets. This payload timestamp is authoritative for reconstructing activity. It is not the GCS object's upload or creation time; network delays and retries can make those differ. |
+| `type` | What happened. Non-empty string. Catalogue names as written (for example `Application opened`). |
+| `browser_uuid` | Persistent pseudonymous browser-installation UUID (see Identifying users). Standard `8-4-4-4-12` hex form. Minted by the sender; ingest only checks form. |
+| `schema_version` | JSON number so historical records can be recognised (see Schema versioning). Only `1` is accepted for now. |
+| `params` | Information particular to that event, as a JSON object (may be `{}`). Individual events can gain fields here without restructuring the envelope. Envelope validation does not inspect keys inside `params`. |
+
+Reject top-level arrays, multiple events in one body, missing envelope keys,
+unknown top-level keys, or a `params` value that is not an object.
 
 The fresh UUID used in the GCS object name (`events/YYYY-MM-DD/<event-uuid>.json`)
-is a storage/naming concern on the ingest side. It is not the user identifier
-in this envelope, and the emit contract does not need to supply it unless we
-later decide the browser should mint it.
+is a storage/naming concern on the ingest side. It is not in this envelope, and
+the emit contract does not supply it.
 
 If unambiguous ordering of events with identical timestamps becomes necessary,
 a per-user sequence number can be added later.
@@ -69,22 +76,21 @@ a per-user sequence number can be added later.
   repo may point to that as what it is intending to match, but probably not have
   a more direct coupling than that
 
-# Identifying users
+# Identifying browsers (browser UUID)
 
-- We didn't need to identify users with the Vercel telemetry because it did that
+- We didn't need a browser UUID with the Vercel telemetry because it did that
   for us.
-- We will now do that ourselves.
-- Each event will carry a persistent pseudonymous user id minted by the sender.
-  This is not a verified personal identity.
-	- A unique string that anonymises the user but serves as a unique key for
-	  that browser/device environment.
-	- Use a UUID (or something similar that is shorter but sufficient).
+- We will now do that ourselves. The envelope field is `browser_uuid`.
+- Each event carries a persistent pseudonymous browser UUID minted by the
+  sender. This is not a verified personal identity.
+	- A unique string that keys one browser/device environment.
+	- Use a UUID (standard `8-4-4-4-12` hex form on the wire).
 	- We don't need this ID to also encapsulate a timestamp but don't care
 	  if it does.
-	- We won't attempt to identify real unique users. DrawExact mints a new ID
-	  on first use in a given browser/device environment and reuses it on
-	  subsequent visits, subject to the persistence of local browser storage
-	  (localStorage).
-- The UUID identifies a browser installation, not a person across devices. That
-  is an accepted compromise; recognising the same person across devices would
-  need more infrastructure and potentially account identity.
+	- We won't attempt to identify real unique people. DrawExact mints a new
+	  browser UUID on first use in a given browser/device environment and
+	  reuses it on subsequent visits, subject to the persistence of local
+	  browser storage (localStorage).
+- The browser UUID identifies a browser installation, not a person across
+  devices. That is an accepted compromise; recognising the same person across
+  devices would need more infrastructure and potentially account identity.

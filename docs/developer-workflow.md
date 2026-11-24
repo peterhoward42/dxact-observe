@@ -1,38 +1,42 @@
 # Developer workflow
 
 - This project is produced with phased scoping, design, planning and
-  implementation across multiple sessions.
+implementation across multiple sessions.
 - The convergence of design and planning docs will require manual iteration.
 
 ## Automation considered
 
 - We considered driving the first full implementation with a carefully described
-  phased automation script that would govern AI work over multiple sessions
-  (phases sized for one session each; a scripted run on the order of a couple
-  of hours).
+phased automation script that would govern AI work over multiple sessions
+(phases sized for one session each; a scripted run on the order of a couple
+of hours).
 - We are not using that approach for now. Work proceeds manually in incremental
-  phases with tests and reviews between them.
+phases with tests and reviews between them.
 
 ## Already decided
 
 - Design events before building the service
 - One monorepo; one Go HTTP Cloud Function; embedded production Svelte SPA;
-  Make-driven source deployment (see technology-choices.md,
-  high-level-architecture.md, developer-tooling.md)
+Make-driven source deployment (see technology-choices.md,
+high-level-architecture.md, developer-tooling.md)
 - Same-origin UI and backend; revisit separate frontend hosting only if
-  traffic, caching, or operational requirements justify it
+traffic, caching, or operational requirements justify it
 - Implement that shape locally in Phase 2 (POST plus serving the UI from one
-  process); first Cloud deploy in Phase 3 with GCS
+process); first Cloud deploy in Phase 3 with GCS
+- Everyday backend unit tests do not require a Svelte build; Make stages
+`static/` only for full verify and deploy (see developer-tooling.md)
 - Keep business logic off HTTP and cloud storage details
 - Analyse via an in-memory model, not by querying raw storage directly:
-  list and read stored events, parse them, group by user UUID, and order by
-  event timestamp for analysis and UI display
-- One GCS object per event; compact single-line JSON; object names
-  `events/YYYY-MM-DD/<event-uuid>.json` (see high-level-architecture.md)
+list and read stored events, parse them, group by browser UUID, and order by
+event timestamp for analysis and UI display
+- One GCS object per event; compact single-line JSON of the validated
+envelope including `params` (not the raw POST body); object names
+`events/YYYY-MM-DD/<event-uuid>.json` (see high-level-architecture.md,
+event-schema.md)
 - UTC event time in the payload is authoritative for reconstructing activity,
-  not object upload or creation time
+not object upload or creation time
 - Optimize for understanding DrawExact's first users, not hypothetical scale;
-  keep the system easy to implement, inspect, and replace
+keep the system easy to implement, inspect, and replace
 - `dxact-draw` owns what gets emitted
 - Work manually in phases, not via a big automation script
 
@@ -40,6 +44,8 @@
 
 - Exactly how the UI loads stored events into the in-memory model
 - Which abuse protections to turn on before public use (see access-control.md)
+- Whether cloud deploy stays Make-driven source upload or switches to Docker  
+(Pete is researching)
 
 ## Phases
 
@@ -49,8 +55,9 @@ Agree the product questions we care about, then the event names and fields that
 would answer them. The questions are in
 [product-questions.md](./product-questions.md). Keep names plain. Prefer a few
 generic events with parameters (for example "command executed" plus the command
-name) over dozens of one-off types. Agree the common envelope: type, UTC time,
-browser UUID, schema version, and extra JSON fields. When DrawExact emits, that
+name) over dozens of one-off types. Agree the common envelope: UTC time, type,
+browser UUID, schema version, and extra JSON fields
+([event-schema.md](./event-schema.md)). When DrawExact emits, that
 contract lives in `dxact-draw`.
 
 **Done when:** there is a written list of questions, events, and fields we are
@@ -65,10 +72,12 @@ shape: a Go handler that accepts a POST and serves a Svelte "Hello World" on
 GET (including static asset paths as needed), real validation of the event
 envelope (including schema version), and saves through a storage interface into
 an in-memory fake. The HTTP layer stays thin; the save logic does not know
-about GCS. User UUIDs are not created here — only checked on the payload. No
+about GCS. Browser UUIDs are not created here — only checked on the payload. No
 Google Cloud in this phase — that waits until Phase 3. This proves the
 arrangement runs under test (one service, both jobs), not analytics and not a
-choice of architecture.
+choice of architecture. Backend package tests stay independent of the frontend
+build; Make’s full verify stages the Hello World before compiling the root
+embed.
 
 **Done when:** POST and GET work locally with the trivial UI; valid events are
 accepted and stored in the fake; bad ones are rejected; tests cover that without
@@ -81,8 +90,8 @@ Cloud Function from source (including staged `static/` assets — see
 developer-tooling.md and google-cloud-platform.md) and use GCS. Implement the
 GCS backend behind the same interface used by the Phase 2 fake. Write one
 object per event under `events/YYYY-MM-DD/<event-uuid>.json` (UTC date from the
-payload timestamp; fresh event UUID for the object name, not the user UUID).
-Do not put event type or user id in the path.
+payload timestamp; fresh event UUID for the object name, not the browser UUID).
+Do not put event type or browser UUID in the path.
 
 **Done when:** the function deploys, GCS save works, and tests (plus a small
 real check) show events survive.
@@ -98,7 +107,7 @@ Phase 1 schema.
 ### 5. In-memory analysis model
 
 Load stored events into a model built for questions, not for cheap storage —
-indexes, maps, or similar as needed. Group by user UUID and order by event
+indexes, maps, or similar as needed. Group by browser UUID and order by event
 timestamp. Support older schema versions on the way in; ignore obsolete fields;
 do not rewrite old objects. Test queries with fixture events so this phase does
 not depend on live traffic. May overlap with Phase 4 once Phases 2–3 are solid.

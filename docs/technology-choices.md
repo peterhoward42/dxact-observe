@@ -35,10 +35,11 @@ project/
 ├── Makefile                # Authoritative build/deploy orchestration
 ├── go.mod
 ├── go.sum
-├── function.go            # Functions Framework HTTP entry point
-├── static/                # Generated Svelte build output, embedded by Go
+├── function.go            # Functions Framework HTTP entry point; //go:embed static
+├── static/                # Generated Svelte build output (gitignored); staged by Make
 │   └── ...
 └── ui/
+    ├── .nvmrc             # Pins Node.js (22)
     ├── package.json
     ├── package-lock.json
     ├── vite.config.js
@@ -48,15 +49,17 @@ project/
 
 The precise names and package layout can change as the implementation develops.
 There is no separate top-level `ingestion/` directory; Go lives at the repo
-root alongside `ui/` and the generated `static/` tree.
+root alongside `ui/` and the generated `static/` tree. `static/` is not
+committed. Everyday Go tests of internal packages do not require it; only the
+Make-integrated build embeds the real SPA (see developer-tooling.md).
 
 # To serve the UI
 
 - Use Svelte to compose the UI as a SPA under `ui/`, organised comparably with
   dxact-draw where that helps.
 - The Cloud Function serves the built static assets (HTML, JavaScript, CSS) as
-  the response to GET, embedding them with Go's `//go:embed static` after Make
-  stages `ui/dist/` into `static/`.
+  the response to GET, embedding them with Go's `//go:embed static` in the root
+  package after Make stages `ui/dist/` into `static/`.
 - Phase 2 proves the decided shape locally (POST plus serving the UI from one
   process). The first Google Cloud deploy waits until Phase 3 with GCS — see
   developer-workflow.md and high-level-architecture.md.

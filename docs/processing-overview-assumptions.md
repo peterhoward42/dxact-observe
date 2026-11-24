@@ -12,7 +12,7 @@
 - Each query should fetch the raw events from storage, so as to build an in
   memory instance of this data model
 - The Cloud Function (or equivalent loader) lists and reads stored events,
-  parses them into that model, groups them by user UUID, and orders them by
+  parses them into that model, groups them by browser UUID, and orders them by
   event timestamp for analysis and UI display
 - Ordering uses the UTC event time in the payload, not object upload or
   creation time. Network delays and retries can mean events arrive out of

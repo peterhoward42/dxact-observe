@@ -107,13 +107,21 @@ architecture.
 
 ## POST ingestion
 
+**POST `/`** only. Expect `Content-Type: application/json`. Responses:
+
+- `204 No Content` — accepted and stored (empty body)
+- `415 Unsupported Media Type` — wrong or missing `Content-Type`
+- `400 Bad Request` — invalid JSON or envelope
+- `500 Internal Server Error` — storage failure
+
 For each POST, the handler:
 
 1. Receives the event
 2. Validates its contents
-3. Converts it into the appropriate storage representation
+3. Converts it into the appropriate storage representation — the validated
+   envelope including `params` (see event-schema.md), not the raw request body
 4. Writes it to storage
-5. Returns success or failure
+5. Returns success or failure as above
 
 ## Storing telemetry events
 
@@ -122,15 +130,15 @@ For each POST, the handler:
   independent write. There is no batching, append coordination, message
   queue, or separate database.
 - **Compact JSON payload.** Each object contains a single line of JSON,
-  without unnecessary formatting.
+  without unnecessary formatting — the accepted envelope after validation,
+  including event-specific `params`.
 - **Preserve event time.** The payload retains the UTC timestamp recorded
   when the action occurred. That timestamp is authoritative for
   reconstructing activity, rather than the object's upload or creation time.
 - The GCS bucket itself is a project setup detail. Observability objects live
   under a shared object-name prefix (see naming below), not by naming the
   bucket `events`.
-- Do not encode event type or the persistent user identifier into object
-  names.
+- Do not encode event type or the browser UUID into object names.
 
 ### Object naming convention
 
@@ -151,10 +159,9 @@ events/2026-11-22/8e6a4c1d-5f29-4e83-9e10-42bd735af0c2.json
   the JSON payload. This makes manual inspection easier and allows listing a
   day's events by prefix if useful later.
 - **`<event-uuid>`** is a fresh UUID for the event, *not* the persistent
-  pseudonymous user UUID. It makes the object name unique even when multiple
-  events share a timestamp or occur concurrently. Minting this id is a
-  storage/naming concern on the ingest side; it is distinct from the user
-  UUID in the payload.
+  browser UUID in the payload. It makes the object name unique even when
+  multiple events share a timestamp or occur concurrently. Minting this id is
+  a storage/naming concern on the ingest side.
 - **`.json`** identifies the payload format.
 
 The original, full-resolution UTC event timestamp remains inside the JSON and
@@ -195,5 +202,5 @@ be added later.
 - The results of each such query shape / recipe will be displayed by whatever
   layout serves that query well (in the SPA)
 - Analysis loads events into an in-memory model (list and read stored objects,
-  parse them, group by user UUID, order by event timestamp) for analysis and
-  UI display — see processing-overview-assumptions.md
+  parse them, group by browser UUID, order by event timestamp) for analysis
+  and UI display — see processing-overview-assumptions.md

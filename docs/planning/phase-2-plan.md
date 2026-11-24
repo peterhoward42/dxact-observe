@@ -145,6 +145,8 @@ Passing these components into `Application` is known as dependency injection. It
 
 For `POST /`, the application must check the content type, decode the JSON body, validate it using `internal/event`, pass the validated envelope (including `params`) to `Store`, and return the appropriate HTTP response. Do not pass the raw POST body to storage.
 
+After a successful save, print that validated event (compact JSON) to stdout. This is temporary local scaffolding so a manual POST against a locally running function can be inspected in the terminal — the in-memory store has no other way to browse its contents. Keep the print as simple as possible; do not add a logging framework or configuration. Remove it in Phase 3 before the first Google Cloud deploy (see [developer-workflow.md](../developer-workflow.md)).
+
 The request body must contain one envelope object as described in [event-schema.md](../event-schema.md).
 
 The HTTP contract is:

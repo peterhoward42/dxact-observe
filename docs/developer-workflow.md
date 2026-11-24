@@ -71,13 +71,16 @@ Build the first real code entirely on a developer machine against the decided
 shape: a Go handler that accepts a POST and serves a Svelte "Hello World" on
 GET (including static asset paths as needed), real validation of the event
 envelope (including schema version), and saves through a storage interface into
-an in-memory fake. The HTTP layer stays thin; the save logic does not know
-about GCS. Browser UUIDs are not created here — only checked on the payload. No
-Google Cloud in this phase — that waits until Phase 3. This proves the
-arrangement runs under test (one service, both jobs), not analytics and not a
-choice of architecture. Backend package tests stay independent of the frontend
-build; Make’s full verify stages the Hello World before compiling the root
-embed.
+an in-memory fake. After each successful save, print the validated event to
+stdout as temporary scaffolding so a manual local POST can be inspected in the
+terminal (the in-memory store has no other way to browse contents). The HTTP
+layer stays thin; the save logic does not know about GCS. Browser UUIDs are not
+created here — only checked on the payload. No Google Cloud in this phase —
+that waits until Phase 3. This proves the arrangement runs under test (one
+service, both jobs), not analytics and not a choice of architecture. Backend
+package tests stay independent of the frontend build; Make’s full verify stages
+the Hello World before compiling the root embed. Detail is in
+[phase-2-plan.md](./planning/phase-2-plan.md).
 
 **Done when:** POST and GET work locally with the trivial UI; valid events are
 accepted and stored in the fake; bad ones are rejected; tests cover that without
@@ -87,14 +90,16 @@ cloud.
 
 First contact with Google Cloud: stand up the project enough to deploy the
 Cloud Function from source (including staged `static/` assets — see
-developer-tooling.md and google-cloud-platform.md) and use GCS. Implement the
-GCS backend behind the same interface used by the Phase 2 fake. Write one
+developer-tooling.md and google-cloud-platform.md) and use GCS. Before the first
+deploy, remove the temporary stdout print from Phase 2 — GCS will hold the
+events for inspection, and the print should not run in production. Implement
+the GCS backend behind the same interface used by the Phase 2 fake. Write one
 object per event under `events/YYYY-MM-DD/<event-uuid>.json` (UTC date from the
 payload timestamp; fresh event UUID for the object name, not the browser UUID).
 Do not put event type or browser UUID in the path.
 
-**Done when:** the function deploys, GCS save works, and tests (plus a small
-real check) show events survive.
+**Done when:** the temporary stdout print is gone; the function deploys; GCS
+save works; and tests (plus a small real check) show events survive.
 
 ### 4. DrawExact sends events
 

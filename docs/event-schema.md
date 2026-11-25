@@ -57,7 +57,11 @@ The fresh UUID used in the GCS object name (`events/YYYY-MM-DD/<event-uuid>.json
 is a storage/naming concern on the ingest side. It is not in this envelope, and
 the emit contract does not supply it.
 
-If unambiguous ordering of events with identical timestamps becomes necessary,
+Fractional seconds are allowed so actions that fall in the same clock second
+can still sort into a plausible order when reconstructing a visit — for
+example opening the examples list and immediately choosing an example. That
+is not a hard guarantee: two events can still share the same timestamp. If
+unambiguous ordering of events with identical timestamps becomes necessary,
 a per-user sequence number can be added later.
 
 ## Schema versioning

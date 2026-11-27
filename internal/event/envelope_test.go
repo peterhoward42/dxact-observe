@@ -9,6 +9,13 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/event"
 )
 
+// This file pins Parse against the common envelope rules in event-schema.md:
+// required fields, Z-suffixed UTC time, plain browser UUID form, schema
+// version 1, and params as a JSON object. Catalogue-specific params are not
+// checked here.
+
+// TestParseAcceptsValidEnvelope checks that a full valid payload becomes an
+// Envelope with the expected field values.
 func TestParseAcceptsValidEnvelope(t *testing.T) {
 	t.Parallel()
 
@@ -51,6 +58,7 @@ func TestParseAcceptsValidEnvelope(t *testing.T) {
 	}
 }
 
+// TestParseAcceptsEmptyParamsObject checks that params may be {}.
 func TestParseAcceptsEmptyParamsObject(t *testing.T) {
 	t.Parallel()
 
@@ -67,6 +75,8 @@ func TestParseAcceptsEmptyParamsObject(t *testing.T) {
 	}
 }
 
+// TestParseAcceptsTimeWithoutFractionalSeconds checks that whole-second Z
+// timestamps are accepted as well as fractional ones.
 func TestParseAcceptsTimeWithoutFractionalSeconds(t *testing.T) {
 	t.Parallel()
 
@@ -84,6 +94,9 @@ func TestParseAcceptsTimeWithoutFractionalSeconds(t *testing.T) {
 	}
 }
 
+// TestParseRejectsInvalidEnvelopes table-tests the rejection paths: missing
+// or invalid fields, unknown keys, non-object params, and malformed or
+// multi-value JSON. Each case names the substring expected in the error.
 func TestParseRejectsInvalidEnvelopes(t *testing.T) {
 	t.Parallel()
 

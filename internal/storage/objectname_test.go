@@ -8,6 +8,11 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/storage"
 )
 
+// This file pins BuildObjectName: events/YYYY-MM-DD/<event-uuid>.json using
+// the envelope's UTC calendar day, not the process local timezone.
+
+// TestBuildObjectNameUsesUTCDateAndEventUUID checks the canonical name format
+// for a straightforward UTC timestamp.
 func TestBuildObjectNameUsesUTCDateAndEventUUID(t *testing.T) {
 	t.Parallel()
 

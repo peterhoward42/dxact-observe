@@ -17,6 +17,8 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/storage"
 )
 
+// Shared helpers for Application HTTP tests in this package.
+
 // failingStore is a Store that always returns err from Save.
 type failingStore struct {
 	err error
@@ -29,6 +31,10 @@ func (s failingStore) Save(
 	return s.err
 }
 
+// newTestApp builds an Application for tests.
+// A nil store or frontend is replaced with a memory store or testFrontend().
+// AcceptedEventOut is left nil so ordinary tests do not assert the temporary
+// stdout scaffolding; tests that care pass Dependencies themselves.
 func newTestApp(
 	t *testing.T,
 	store storage.Store,
@@ -59,6 +65,7 @@ func testFrontend() fstest.MapFS {
 	}
 }
 
+// validPayload returns a new valid envelope map for one test to mutate.
 func validPayload() map[string]any {
 	return map[string]any{
 		"time":           "2026-11-24T08:45:12.345Z",
@@ -81,6 +88,8 @@ func mustMarshal(t *testing.T, value any) []byte {
 	return body
 }
 
+// postJSON issues POST / with the given Content-Type and body.
+// An empty contentType omits the header so missing-type cases can be tested.
 func postJSON(
 	t *testing.T,
 	handler http.Handler,
@@ -101,6 +110,7 @@ func postJSON(
 	return rec
 }
 
+// doRequest issues a body-less HTTP request of the given method and path.
 func doRequest(
 	t *testing.T,
 	handler http.Handler,

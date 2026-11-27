@@ -11,6 +11,9 @@
 # Frontend commands use the Node.js major version specified in ui/.nvmrc.
 # Generated frontend assets are embedded into the Go application at build time.
 
+# nvm must be sourced under bash; the default /bin/sh (dash on Ubuntu) cannot
+# select the Node version pinned in ui/.nvmrc.
+SHELL := /bin/bash
 
 # Everyday backend tests for internal packages only. Does not need Node.js,
 # Vite, or a staged static/ frontend tree.

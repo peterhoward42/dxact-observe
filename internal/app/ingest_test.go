@@ -14,10 +14,22 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/storage"
 )
 
+// This file pins the Phase 2 POST / ingest contract for Application: content
+// type, envelope validation, storage of the re-encoded envelope under the
+// expected object name, the temporary AcceptedEventOut line, and the plan's
+// status codes. Tests drive Application with a memory Store; they do not
+// start the Functions Framework.
+
+// TestPostAcceptsValidEnvelope checks the happy path end to end: 204, empty
+// body, stored object name and compact JSON, and one AcceptedEventOut line.
 func TestPostAcceptsValidEnvelope(t *testing.T) {
 	t.Parallel()
 
-	store := storage.NewMemoryStore(uuid.NewRandom)
+	// Fixed event UUID so the expected object name is deterministic.
+	eventID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	store := storage.NewMemoryStore(func() (uuid.UUID, error) {
+		return eventID, nil
+	})
 	var accepted bytes.Buffer
 	application := app.NewApplication(app.Dependencies{
 		Store:            store,
@@ -35,17 +47,18 @@ func TestPostAcceptsValidEnvelope(t *testing.T) {
 		t.Fatalf("body: got %q, want empty", got)
 	}
 
-	names := store.ObjectNames()
-	if len(names) != 1 {
-		t.Fatalf("stored objects: got %d, want 1", len(names))
-	}
-	stored, ok := store.GetBody(names[0])
-	if !ok {
-		t.Fatalf("GetBody(%q): missing", names[0])
-	}
 	envelope, err := event.Parse(body)
 	if err != nil {
 		t.Fatalf("Parse fixture: %v", err)
+	}
+	wantName := storage.BuildObjectName(envelope.Time, eventID)
+	names := store.ObjectNames()
+	if len(names) != 1 || names[0] != wantName {
+		t.Fatalf("ObjectNames: got %v, want [%s]", names, wantName)
+	}
+	stored, ok := store.GetBody(wantName)
+	if !ok {
+		t.Fatalf("GetBody(%q): missing", wantName)
 	}
 	want, err := storage.EncodeEnvelope(envelope)
 	if err != nil {
@@ -59,6 +72,8 @@ func TestPostAcceptsValidEnvelope(t *testing.T) {
 	}
 }
 
+// TestPostAcceptsJSONContentTypeWithCharset checks that an optional
+// charset=utf-8 suffix on application/json is still accepted.
 func TestPostAcceptsJSONContentTypeWithCharset(t *testing.T) {
 	t.Parallel()
 
@@ -81,6 +96,8 @@ func TestPostAcceptsJSONContentTypeWithCharset(t *testing.T) {
 	}
 }
 
+// TestPostRejectsWrongContentType checks that non-JSON media types return
+// 415 and leave the store empty.
 func TestPostRejectsWrongContentType(t *testing.T) {
 	t.Parallel()
 
@@ -117,6 +134,9 @@ func TestPostRejectsWrongContentType(t *testing.T) {
 	}
 }
 
+// TestPostRejectsInvalidEnvelope checks that bad JSON or a bad envelope
+// returns 400 and does not store anything. Detailed envelope rules live in
+// internal/event tests; here we only sample that Application maps them to 400.
 func TestPostRejectsInvalidEnvelope(t *testing.T) {
 	t.Parallel()
 
@@ -161,6 +181,8 @@ func TestPostRejectsInvalidEnvelope(t *testing.T) {
 	}
 }
 
+// TestPostStorageFailureReturnsInternalServerError checks that a Store.Save
+// error becomes HTTP 500.
 func TestPostStorageFailureReturnsInternalServerError(t *testing.T) {
 	t.Parallel()
 
@@ -182,6 +204,8 @@ func TestPostStorageFailureReturnsInternalServerError(t *testing.T) {
 	}
 }
 
+// TestPostOutsideRootIsMethodNotAllowed checks that ingest is POST / only.
+// A POST to another path is 405 with Allow listing GET and HEAD (not POST).
 func TestPostOutsideRootIsMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 

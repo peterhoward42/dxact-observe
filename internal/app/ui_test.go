@@ -6,6 +6,12 @@ import (
 	"testing/fstest"
 )
 
+// This file pins GET/HEAD UI serving for Application against an injected
+// fstest.MapFS: real files, SPA fallback to index.html for non-asset paths,
+// 404 for missing assets, and 405 Allow headers. No Vite build or staged
+// static/ directory is required.
+
+// TestGetServesIndex checks that GET / returns the injected index.html bytes.
 func TestGetServesIndex(t *testing.T) {
 	t.Parallel()
 
@@ -23,6 +29,8 @@ func TestGetServesIndex(t *testing.T) {
 	}
 }
 
+// TestGetServesRealAsset checks that an existing file under /assets is served
+// as-is rather than replaced by the SPA fallback.
 func TestGetServesRealAsset(t *testing.T) {
 	t.Parallel()
 
@@ -40,6 +48,8 @@ func TestGetServesRealAsset(t *testing.T) {
 	}
 }
 
+// TestGetFallsBackToIndexForSPARoute checks that a missing non-asset path
+// returns index.html with 200 so client-side routes can load.
 func TestGetFallsBackToIndexForSPARoute(t *testing.T) {
 	t.Parallel()
 
@@ -57,6 +67,8 @@ func TestGetFallsBackToIndexForSPARoute(t *testing.T) {
 	}
 }
 
+// TestGetMissingAssetReturnsNotFound checks that missing asset-like paths
+// return 404 instead of falling back to index.html.
 func TestGetMissingAssetReturnsNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -87,6 +99,8 @@ func TestGetMissingAssetReturnsNotFound(t *testing.T) {
 	}
 }
 
+// TestHeadServesIndexWithoutBody checks that HEAD / succeeds like GET but
+// carries an empty body.
 func TestHeadServesIndexWithoutBody(t *testing.T) {
 	t.Parallel()
 
@@ -102,6 +116,7 @@ func TestHeadServesIndexWithoutBody(t *testing.T) {
 	}
 }
 
+// TestUnsupportedMethodOnRoot checks that / allows GET, HEAD, and POST.
 func TestUnsupportedMethodOnRoot(t *testing.T) {
 	t.Parallel()
 
@@ -121,6 +136,8 @@ func TestUnsupportedMethodOnRoot(t *testing.T) {
 	}
 }
 
+// TestUnsupportedMethodOnAssetPath checks that non-root paths allow only
+// GET and HEAD (ingest POST is not offered there).
 func TestUnsupportedMethodOnAssetPath(t *testing.T) {
 	t.Parallel()
 

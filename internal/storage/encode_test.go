@@ -10,6 +10,11 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/storage"
 )
 
+// This file pins EncodeEnvelope: compact single-line JSON with time first,
+// Z-suffixed UTC times, and params preserved (including {}).
+
+// TestEncodeEnvelopeIsCompactJSONWithTimeFirst checks the stored wire shape:
+// one line, time as the first field, and all envelope fields round-trip.
 func TestEncodeEnvelopeIsCompactJSONWithTimeFirst(t *testing.T) {
 	t.Parallel()
 
@@ -72,6 +77,8 @@ func TestEncodeEnvelopeIsCompactJSONWithTimeFirst(t *testing.T) {
 	}
 }
 
+// TestEncodeEnvelopeOmitsFractionalSecondsWhenWhole checks that a whole-second
+// timestamp is written without a fractional part.
 func TestEncodeEnvelopeOmitsFractionalSecondsWhenWhole(t *testing.T) {
 	t.Parallel()
 
@@ -89,6 +96,8 @@ func TestEncodeEnvelopeOmitsFractionalSecondsWhenWhole(t *testing.T) {
 	}
 }
 
+// TestEncodeEnvelopeKeepsEmptyParamsObject checks that an empty params object
+// stays "{}" rather than being dropped or turned into null.
 func TestEncodeEnvelopeKeepsEmptyParamsObject(t *testing.T) {
 	t.Parallel()
 

@@ -11,6 +11,12 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/storage"
 )
 
+// This file pins MemoryStore.Save: encoded body under the object name from
+// event time plus a fresh event UUID, no overwrite, context and mint errors,
+// and safe concurrent saves. fixedIDs makes object names deterministic.
+
+// TestMemoryStoreSaveStoresEncodedEnvelopeUnderObjectName checks that Save
+// writes EncodeEnvelope output under BuildObjectName(time, eventUUID).
 func TestMemoryStoreSaveStoresEncodedEnvelopeUnderObjectName(t *testing.T) {
 	t.Parallel()
 
@@ -40,6 +46,9 @@ func TestMemoryStoreSaveStoresEncodedEnvelopeUnderObjectName(t *testing.T) {
 	}
 }
 
+// TestMemoryStoreSaveKeepsDistinctNamesForSameBrowser checks that two saves
+// of the same envelope (same browser_uuid) get different object names when
+// the event UUIDs differ, so events do not overwrite each other.
 func TestMemoryStoreSaveKeepsDistinctNamesForSameBrowser(t *testing.T) {
 	t.Parallel()
 
@@ -70,6 +79,8 @@ func TestMemoryStoreSaveKeepsDistinctNamesForSameBrowser(t *testing.T) {
 	}
 }
 
+// TestMemoryStoreSaveRejectsDuplicateObjectName checks that a second Save
+// with the same minted event UUID fails and leaves the first object in place.
 func TestMemoryStoreSaveRejectsDuplicateObjectName(t *testing.T) {
 	t.Parallel()
 
@@ -92,6 +103,8 @@ func TestMemoryStoreSaveRejectsDuplicateObjectName(t *testing.T) {
 	}
 }
 
+// TestMemoryStoreSaveHonoursCancelledContext checks that a cancelled context
+// fails Save before anything is stored.
 func TestMemoryStoreSaveHonoursCancelledContext(t *testing.T) {
 	t.Parallel()
 
@@ -111,6 +124,8 @@ func TestMemoryStoreSaveHonoursCancelledContext(t *testing.T) {
 	}
 }
 
+// TestMemoryStoreSavePropagatesIDMintFailure checks that a newUUID error
+// surfaces from Save and stores nothing.
 func TestMemoryStoreSavePropagatesIDMintFailure(t *testing.T) {
 	t.Parallel()
 
@@ -128,6 +143,8 @@ func TestMemoryStoreSavePropagatesIDMintFailure(t *testing.T) {
 	}
 }
 
+// TestMemoryStoreSaveIsSafeUnderConcurrentSaves checks that concurrent Save
+// calls with distinct event UUIDs all succeed without lost or corrupt objects.
 func TestMemoryStoreSaveIsSafeUnderConcurrentSaves(t *testing.T) {
 	t.Parallel()
 
@@ -199,6 +216,8 @@ func fixedIDs(
 	}
 }
 
+// sameNames reports whether got and want contain the same names with the
+// same multiplicities, ignoring order.
 func sameNames(got, want []string) bool {
 	if len(got) != len(want) {
 		return false

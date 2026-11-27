@@ -8,6 +8,8 @@ import (
 	"github.com/peterhoward42/dxact-observe/internal/event"
 )
 
+// Shared helpers for storage package tests.
+
 // validEnvelope returns a fresh validated envelope for one test.
 func validEnvelope(t *testing.T) event.Envelope {
 	t.Helper()

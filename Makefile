@@ -3,9 +3,10 @@
 # Developer entry points:
 #   make test          Quick, frontend-independent Go tests.
 #   make verify        Full frontend build plus whole-module Go checks.
+#   make run           Stage the UI and serve locally (Functions Framework).
 #
 # Frontend build pipeline:
-#   install-ui-deps -> build-ui -> stage-ui-assets -> verify
+#   install-ui-deps -> build-ui -> stage-ui-assets -> verify / run
 #
 # Frontend commands use the Node.js major version specified in ui/.nvmrc.
 # Generated frontend assets are embedded into the Go application at build time.
@@ -27,6 +28,14 @@ test:
 verify: stage-ui-assets
 	go test -count=1 ./...
 	go build -o /dev/null .
+
+# Local Functions Framework server for the Observe HTTP function.
+# Stages the frontend first so //go:embed static can compile.
+# Listens on 127.0.0.1:8080 by default (override with PORT).
+# FUNCTION_TARGET must match the name registered in function.go.
+.PHONY: run
+run: stage-ui-assets
+	FUNCTION_TARGET=Observe LOCAL_ONLY=true go run ./cmd
 
 # Helper macro for executing frontend commands with the Node.js major version
 # specified in ui/.nvmrc.
